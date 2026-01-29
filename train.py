@@ -446,13 +446,11 @@ def test(args):
     print(f"Model parameters: {model_params / 1e6:.2f} M")
 
 
-    # FLOPs/MACs 统计
 
     x = torch.randn(1, 243, 17, 3).to(device)
     from model.mamba_ssm.modules.mamba2 import Mamba2
     custom_ops = {Mamba2: count_mamba}
 
-    # FLOPs/MACs 统计 (带自定义 Mamba2 计数器)
     macs, params = profile(model, inputs=(x,), custom_ops={Mamba2: count_mamba})
     print(macs / 1e9, "G", params / 1e6, "M")
 
@@ -477,10 +475,6 @@ def test(args):
 
 
 def count_mamba(m: torch.nn.Module, inputs, output):
-    """
-    增量修正版: 让 thop 默认算 Linear/Conv，
-    我们只额外补 SSM 的复杂度。
-    """
     inp = None
     if isinstance(inputs, torch.Tensor):
         inp = inputs
@@ -500,14 +494,14 @@ def count_mamba(m: torch.nn.Module, inputs, output):
     else:
         return 0, sum(p.numel() for p in m.parameters())
 
-    # ---------- SSM 部分额外 FLOPs ----------
+
     extra_macs = 0
     if hasattr(m, 'd_ssm') and hasattr(m, 'd_state'):
         d_ssm = int(m.d_ssm)
         d_state = int(m.d_state)
         extra_macs += 2 * B * L * d_ssm * d_state
 
-    # 返回 额外macs + 参数量
+
     return int(extra_macs), sum(p.numel() for p in m.parameters())
 
 
