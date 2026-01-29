@@ -53,5 +53,3 @@ Our code refers to the following repositories:
 - [MotionAGFormer](https://github.com/TaatiTeam/MotionAGFormer)
 
 We thank the authors for releasing their codes.
-
-```
